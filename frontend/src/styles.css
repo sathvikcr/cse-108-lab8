@@ -1,0 +1,21 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #1f2933; background: #f4f6f8; }
+.bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: #218fbb; color: #fff; }
+main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+.card { background: #fff; border: 1px solid #d5dbe1; border-radius: 8px; padding: 24px; }
+.login { max-width: 320px; margin: 80px auto; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+input { padding: 8px 10px; border: 1px solid #aab4be; border-radius: 4px; font-size: 14px; }
+.grade { width: 80px; }
+button, .btn { padding: 8px 14px; border: 0; border-radius: 4px; background: #1d3557; color: #fff; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
+button.link { background: none; color: inherit; text-decoration: underline; padding: 0; }
+main button.link { color: #1d3557; }
+button.danger { background: #b3261e; }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tabs button { background: #fff; color: #1d3557; border: 1px solid #1d3557; }
+.tabs button.on { background: #1d3557; color: #fff; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e3e8ed; }
+th { background: #eaeff4; }
+.muted { color: #7b8794; }
+.error { color: #b3261e; }
+.ok { color: #1b7a3d; }
