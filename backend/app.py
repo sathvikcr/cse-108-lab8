@@ -43,9 +43,11 @@ def create_app(db_uri=None):
         return deco
 
     def course_json(c, enrolled_ids=()):
+        teacher_name = c.teacher.display_name if c.teacher else "Unknown Teacher"
+        valid_enrollments = [e for e in c.enrollments if e.student]
         return dict(
-            id=c.id, name=c.name, teacher=c.teacher.display_name, time=c.time,
-            capacity=c.capacity, enrolled=len(c.enrollments),
+            id=c.id, name=c.name, teacher=teacher_name, time=c.time,
+            capacity=c.capacity, enrolled=len(valid_enrollments),
             is_enrolled=c.id in enrolled_ids,
         )
 
@@ -138,7 +140,8 @@ def create_app(db_uri=None):
         c = own_course_or_404(cid)
         if not c:
             return jsonify(error="Course not found"), 404
-        roster = sorted(c.enrollments, key=lambda e: e.student.display_name)
+        valid_enrollments = [e for e in c.enrollments if e.student]
+        roster = sorted(valid_enrollments, key=lambda e: e.student.display_name)
         return jsonify(
             course=course_json(c),
             students=[dict(enrollment_id=e.id, name=e.student.display_name, grade=e.grade)
@@ -192,6 +195,10 @@ def create_app(db_uri=None):
             elif is_created:
                 raise ValueError("A password is required for new users")
 
+        def on_model_delete(self, model):
+            Enrollment.query.filter_by(student_id=model.id).delete()
+            Course.query.filter_by(teacher_id=model.id).delete()
+
     class CourseView(SecureView):
         column_list = ["name", "teacher", "time", "capacity"]
 
@@ -202,6 +209,15 @@ def create_app(db_uri=None):
     admin.add_view(UserView(User, db.session))
     admin.add_view(CourseView(Course, db.session))
     admin.add_view(EnrollmentView(Enrollment, db.session))
+
+    with app.app_context():
+        try:
+            db.session.execute(text("DELETE FROM enrollment WHERE student_id NOT IN (SELECT id FROM user)"))
+            db.session.execute(text("DELETE FROM enrollment WHERE course_id NOT IN (SELECT id FROM course)"))
+            db.session.execute(text("DELETE FROM course WHERE teacher_id NOT IN (SELECT id FROM user)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     return app
 

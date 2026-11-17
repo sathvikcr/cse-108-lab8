@@ -1,7 +1,7 @@
 import os, tempfile
 from app import create_app
 from seed import seed
-from models import db, Enrollment, Course
+from models import db, User, Enrollment, Course
 
 fd, path = tempfile.mkstemp(suffix=".db")
 os.close(fd)
@@ -50,5 +50,25 @@ a = login("admin", "admin123")
 assert a.get("/admin/").status_code == 302
 for p in ["/admin/user/", "/admin/course/", "/admin/enrollment/", "/admin/user/new/"]:
     assert a.get(p).status_code == 200, p
+
+# Test deleting a student via admin doesn't break teacher roster
+with app.app_context():
+    nancy = User.query.filter_by(display_name="Nancy Little").first()
+    nancy_id = nancy.id
+
+del_res = a.post("/admin/user/delete/", data=dict(id=nancy_id), follow_redirects=True)
+assert del_res.status_code == 200
+
+# Verify teacher roster loads without error and Nancy is gone
+r2 = t.get(f"/api/teacher/courses/{cid['CS 162']}").json
+assert len(r2["students"]) == 3
+assert all(x["name"] != "Nancy Little" for x in r2["students"])
+
 print("All tests passed")
-os.remove(path)
+with app.app_context():
+    db.session.remove()
+    db.engine.dispose()
+try:
+    os.remove(path)
+except OSError:
+    pass
